@@ -53,14 +53,16 @@ void wicky() {
     woky = digitalRead(indmotorpin); //start reading the low pin
     if(!woky && !sawlow) {
       sawlow = true;
+      Serial.println("I see LOW");
     }
     if(sawlow) {
       if(woky && !sawhigh) {
        sawhigh = true;
+       Serial.println("I see HIGH");
       }
       if(sawhigh) {
        if(!woky) {
-         digitalWrite(indshelfpin, LOW); //turn off 5 volt pin
+        digitalWrite(indshelfpin, LOW); //turn off 5 volt pin
         //it's low again, shut off motor!
         digitalWrite(motorpin, LOW);
         digitalWrite(shelfpin, LOW);
