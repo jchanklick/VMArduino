@@ -35,14 +35,14 @@ void setup() {
 // the loop routine runs over and over again forever:
 
 void wicky(int target) {
-  if(!pin_centers[target]) {
-    if(!pin_centering[target]) {
+  if(!centered) {
+    if(!centering) {
       Serial.println("Begin centering process");
       digitalWrite(53, HIGH); //turn on 5 volt pin
       //turn on motor
       digitalWrite(22, HIGH);
       digitalWrite(23, HIGH);
-      pin_centering[target] = true;
+      centering = true;
     }
     
     woky = digitalRead(52); //start reading the low pin
