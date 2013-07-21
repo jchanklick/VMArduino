@@ -12,6 +12,8 @@ int indmotor[] = {53, 51, 49, 47, 45, 43, 41, 39};
 boolean centered = false;
 boolean lowcheck = false;
 
+boolean hithere = false;
+
 const byte ROWS = 4; 
 const byte COLS = 4; 
 char keys[ROWS][COLS] = {
