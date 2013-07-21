@@ -6,7 +6,12 @@ int pin_black[] = {22, 24, 26, 28, 30, 32, 34, 36};
 int pin_red[] = {23, 25, 27, 29, 31, 33};
 
 int indshelf[] = {53, 51, 49, 47, 45};
-int indmotor[] = {52, 50, 48, 46, 44, 42, 40, };
+int indmotor[] = {52, 50, 48, 46, 44, 42, 40, 38};
+
+int indshelfpin = 53;
+int indmotorpin = 52;
+int motorpin = 22;
+int shelfpin = 23;
 
 boolean woky = false;
 boolean sawlow = false;
@@ -19,33 +24,33 @@ void setup() {
   // initialize serial communication at 9600 bits per second:
   Serial.begin(9600);
   // make the pushbutton's pin an input:
-  pinMode(52, INPUT);
-  pinMode(53, OUTPUT);
+  pinMode(indmotorpin, INPUT);
+  pinMode(indshelfpin, OUTPUT);
   
-  pinMode(22, OUTPUT);
-  pinMode(23, OUTPUT);
+  pinMode(motorpin, OUTPUT);
+  pinMode(shelfpin, OUTPUT);
   
-  digitalWrite(22, LOW);
-  digitalWrite(23, LOW);
-  digitalWrite(53, LOW);
+  digitalWrite(motorpin, LOW);
+  digitalWrite(shelfpin, LOW);
+  digitalWrite(indshelfpin, LOW);
   
   Serial.println("Centering Sketch");
 }
 
 // the loop routine runs over and over again forever:
 
-void wicky() {
+void wicky(int target) {
   if(!centered) {
     if(!centering) {
       Serial.println("Begin centering process");
-      digitalWrite(53, HIGH); //turn on 5 volt pin
+      digitalWrite(indshelfpin, HIGH); //turn on 5 volt pin
       //turn on motor
-      digitalWrite(22, HIGH);
-      digitalWrite(23, HIGH);
+      digitalWrite(motorpin, HIGH);
+      digitalWrite(shelfpin, HIGH);
       centering = true;
     }
     
-    woky = digitalRead(52); //start reading the low pin
+    woky = digitalRead(indmotorpin); //start reading the low pin
     if(!woky && !sawlow) {
       sawlow = true;
     }
@@ -55,10 +60,10 @@ void wicky() {
       }
       if(sawhigh) {
        if(!woky) {
-         digitalWrite(53, LOW); //turn off 5 volt pin
+         digitalWrite(indshelfpin, LOW); //turn off 5 volt pin
         //it's low again, shut off motor!
-        digitalWrite(22, LOW);
-        digitalWrite(23, LOW);
+        digitalWrite(motorpin, LOW);
+        digitalWrite(shelfpin, LOW);
         centered = true;
         centering = false;
         Serial.println("CENTERED");
