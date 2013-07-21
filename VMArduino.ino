@@ -34,7 +34,7 @@ void setup() {
 
 // the loop routine runs over and over again forever:
 
-void wicky(int target) {
+void wicky() {
   if(!centered) {
     if(!centering) {
       Serial.println("Begin centering process");
