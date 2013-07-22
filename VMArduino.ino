@@ -102,6 +102,7 @@ boolean docenter(int shelf, int motor) {
 }
 
 void rotateandread(int shelf, int motor, int readshelf, int readmotor) {
+  Serial.println("Rotate and Read...");
   int motorpin = pin_black[motor];       //22
   int shelfpin = pin_red[shelf];        //23
   int indmotorpin = indmotor[readmotor];   //52
