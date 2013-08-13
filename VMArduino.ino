@@ -1,5 +1,5 @@
 boolean go = true;
-String themode = "r";
+String themode = "postest";
 int centeronshelf = 0;
 int centermotor = 0;
 int rrshelf = 0;
@@ -14,12 +14,52 @@ int indmotor[] = {52, 50, 48, 46, 44, 42, 40, 38};
 void setup() {
   // initialize serial communication at 9600 bits per second:
   Serial.begin(9600);
+  
+  for (int i = 0; i < 8; i++){ 
+    pinMode ( pin_black[i], OUTPUT);
+    digitalWrite(pin_black[i], LOW);
+    pinMode (indmotor[i], INPUT);
+  }
+  for (int i = 0; i < 6; i++){ 
+    pinMode ( pin_red[i], OUTPUT);
+    digitalWrite(pin_red[i], LOW);
+    pinMode (indshelf[i], OUTPUT);
+    digitalWrite(indshelf[i], LOW);
+  }
+
   Serial.println(" ");
   Serial.println("Centering Sketch");
+
   delay(666);
 }
 
-// the loop routine runs over and over again forever:
+void pinslow() {
+  //Serial.println("Setting pins LOW: ");
+  for (int i = 0; i < 8; i++){
+    //Serial.print("pb.");
+    //Serial.print(pin_black[i]);
+    //Serial.print("  ");
+    digitalWrite(pin_black[i], LOW);
+    delay(1);
+  }
+  for (int i = 0; i < 6; i++){
+    //Serial.print("pr.");
+    //Serial.print(pin_red[i]);
+    //Serial.print("  ");
+    digitalWrite(pin_red[i], LOW);
+    digitalWrite(indshelf[i], LOW);
+    delay(1);
+  }
+  delay(22);
+}
+void pinshigh() {
+  for (int i = 0; i < 8; i++){ 
+    digitalWrite(pin_black[i], HIGH);
+  }
+  for (int i = 0; i < 6; i++){ 
+    digitalWrite(pin_red[i], HIGH);
+  }
+}
 
 boolean docenter(int shelf, int motor) {
   int motorpin = pin_black[motor];       //22
@@ -37,10 +77,6 @@ boolean docenter(int shelf, int motor) {
   boolean centered = false;
   int debouncedelay = 66;
   unsigned long bouncedat = millis();
-  pinMode(indmotorpin, INPUT);
-  pinMode(indshelfpin, OUTPUT);
-  pinMode(motorpin, OUTPUT);
-  pinMode(shelfpin, OUTPUT);
   digitalWrite(motorpin, LOW);
   digitalWrite(shelfpin, LOW);
   digitalWrite(indshelfpin, LOW);
@@ -114,10 +150,6 @@ void rotateandread(int shelf, int motor, int readshelf, int readmotor) {
   boolean debounceset = false;
   int debouncedelay = 66;
   unsigned long bouncedat = millis();
-  pinMode(indmotorpin, INPUT);
-  pinMode(indshelfpin, OUTPUT);
-  pinMode(motorpin, OUTPUT);
-  pinMode(shelfpin, OUTPUT);
   digitalWrite(motorpin, LOW);
   digitalWrite(shelfpin, LOW);
   digitalWrite(indshelfpin, HIGH);
@@ -151,6 +183,56 @@ void rotateandread(int shelf, int motor, int readshelf, int readmotor) {
   Serial.println("Finished Rotate and Read");
 }
 
+void stepsketch() {
+  Serial.println("Step Mode...waiting a few seconds");
+  delay(1000);
+  Serial.println("Begin...");
+  for (int i = 0; i < 6; i++){
+    Serial.print("i: ");
+    Serial.print(i);
+    Serial.print(", pin_red[]: ");
+    Serial.println(pin_red[i]);
+    delay(500);
+    for (int j = 0; j < 8; j++){ 
+      digitalWrite(pin_red[i], HIGH);
+      digitalWrite(pin_black[j], HIGH);
+      Serial.print("j: ");
+      Serial.print(j);
+      Serial.print(", pin_black[]: ");
+      Serial.println(pin_black[j]);
+      delay(1000);
+      pinslow();
+    }
+  }
+}
+
+void postest() {
+  //like stepsketch, except only manipulates positive pins
+  Serial.println("Positive Gate Test Mode...waiting");
+  delay(1000);
+  Serial.println("Begin...");
+  for (int i = 0; i < 6; i++){
+    Serial.print("i: ");
+    Serial.print(i);
+    Serial.print(", pin_red[]: ");
+    Serial.println(pin_red[i]);
+    delay(33);
+    digitalWrite(pin_red[i], HIGH);
+    delay(5555);
+    pinslow();
+  }
+  pinslow();
+  delay(666);
+}
+
+void specificpin() {
+  pinslow();
+  for (int i = 0; i < 6; i++){
+    digitalWrite(pin_red[i], HIGH);
+  }
+  digitalWrite(pin_black[0], HIGH);
+}
+
 void loop() {
   if(go) {
     if(themode == "c") {
@@ -159,6 +241,15 @@ void loop() {
       Serial.println(centerresult);
     } else if (themode == "r") {
       rotateandread(centeronshelf, centermotor, rrshelf, rrmotor);
+    } else if (themode == "s") {
+      stepsketch();
+    } else if (themode == "a") {
+      Serial.print("Pins High");
+      pinshigh();
+    } else if (themode == "sp") {
+      specificpin();
+    } else if (themode == "postest") {
+      postest();
     }
     go = false;
   }
