@@ -1,54 +1,71 @@
 boolean go = true;
-String themode = "postest";
-int centeronshelf = 0;
+String themode = "center";
+int centeronshelf = 1;
 int centermotor = 0;
-int rrshelf = 0;
+int rrshelf = 1;
 int rrmotor = 0;
-
+int shelfwitheight = 3;
 int pin_red[] = {23, 25, 27, 29, 31, 33};
 int pin_black[] = {22, 24, 26, 28, 30, 32, 34, 36};
 int indshelf[] = {53, 51, 49, 47, 45};
 int indmotor[] = {52, 50, 48, 46, 44, 42, 40, 38};
 
+
+int motorextentdefault = 4;
+int motorextent = 4;
+int specialshelf = 3;
+
+
+boolean simplereading = false;
+
 // the setup routine runs once when you press reset:
 void setup() {
   // initialize serial communication at 9600 bits per second:
   Serial.begin(9600);
-  
+  Serial.println(" ");
+  Serial.println("Initializing");
+
   for (int i = 0; i < 8; i++){ 
     pinMode ( pin_black[i], OUTPUT);
+    delay(33);
+    Serial.print(".");
     digitalWrite(pin_black[i], LOW);
     pinMode (indmotor[i], INPUT);
+    delay(33);
+    Serial.print(".");
   }
   for (int i = 0; i < 6; i++){ 
     pinMode ( pin_red[i], OUTPUT);
+    delay(33);
+    Serial.print(".");
     digitalWrite(pin_red[i], LOW);
+  }
+  for(int i = 0; i < 5; i++) {
     pinMode (indshelf[i], OUTPUT);
+    delay(33);
+    Serial.print(".");
     digitalWrite(indshelf[i], LOW);
   }
 
   Serial.println(" ");
-  Serial.println("Centering Sketch");
+  Serial.print("Mode: ");
+  Serial.println(themode);
 
-  delay(666);
+  delay(111);
 }
 
 void pinslow() {
   //Serial.println("Setting pins LOW: ");
   for (int i = 0; i < 8; i++){
-    //Serial.print("pb.");
-    //Serial.print(pin_black[i]);
-    //Serial.print("  ");
     digitalWrite(pin_black[i], LOW);
     delay(1);
   }
   for (int i = 0; i < 6; i++){
-    //Serial.print("pr.");
-    //Serial.print(pin_red[i]);
-    //Serial.print("  ");
     digitalWrite(pin_red[i], LOW);
-    digitalWrite(indshelf[i], LOW);
     delay(1);
+  }
+  for (int i=0; i<5; i++) {
+    digitalWrite(indshelf[i], LOW);
   }
   delay(22);
 }
@@ -66,7 +83,7 @@ boolean docenter(int shelf, int motor) {
   int shelfpin = pin_red[shelf];        //23
   int indmotorpin = indmotor[motor];   //52
   int indshelfpin = indshelf[shelf];    //53
-  int timeout = 9000;
+  int timeout = 6666;
   boolean indstate = false;
   boolean prestate = false;
   boolean laststate = false;
@@ -81,7 +98,11 @@ boolean docenter(int shelf, int motor) {
   digitalWrite(shelfpin, LOW);
   digitalWrite(indshelfpin, LOW);
   if(!centered) {
-    Serial.println("Begin centering process");
+    Serial.println(" ");
+    Serial.print("Center: ");
+    Serial.print(shelf);
+    Serial.print(",");
+    Serial.println(motor);
     int timeoutcount = 0;
     while(!centered && (timeoutcount < timeout)) {
       if(!centering) {
@@ -108,11 +129,13 @@ boolean docenter(int shelf, int motor) {
       }
       if(!indstate && !sawlow) {
         sawlow = true;
+        timeoutcount = 0;
         Serial.println("indstate LOW");
       }
       if(sawlow) {
         if(indstate && !sawhigh) {
          sawhigh = true;
+         timeoutcount = 0;
          Serial.println("indstate HIGH");
         }
         if(sawhigh) {
@@ -124,6 +147,7 @@ boolean docenter(int shelf, int motor) {
           centered = true;
           centering = false;
           Serial.println("CENTERED");
+          pinslow();
           return true;
          }
         }
@@ -132,6 +156,7 @@ boolean docenter(int shelf, int motor) {
       delay(1);
     }
     if(timeoutcount >= timeout) {
+      pinslow();
       return false;
     }
   }
@@ -150,12 +175,12 @@ void rotateandread(int shelf, int motor, int readshelf, int readmotor) {
   boolean debounceset = false;
   int debouncedelay = 66;
   unsigned long bouncedat = millis();
-  digitalWrite(motorpin, LOW);
-  digitalWrite(shelfpin, LOW);
+  digitalWrite(motorpin, HIGH);
+  digitalWrite(shelfpin, HIGH);
   digitalWrite(indshelfpin, HIGH);
   int timeout = 9000;
   int timeoutcount = 0;
-  while(timeoutcount < timeout) {
+  while(timeoutcount < timeout) {  //timeoutcount < timeout
     prestate = digitalRead(indmotorpin);
     if(prestate != lastdbstate) {
       if(!debounceset) {
@@ -179,15 +204,52 @@ void rotateandread(int shelf, int motor, int readshelf, int readmotor) {
     timeoutcount++;
     delay(1);
   }
-  digitalWrite(indshelfpin, LOW);
+  pinslow();
   Serial.println("Finished Rotate and Read");
 }
-
+void justread(int readshelf, int readmotor) {
+  Serial.println("Just Read...");
+  int indmotorpin = indmotor[readmotor];   //52
+  int indshelfpin = indshelf[readshelf];    //53
+  boolean indstate = false;
+  boolean laststate = false;
+  boolean prestate = false;
+  boolean lastdbstate = false;
+  boolean debounceset = false;
+  int debouncedelay = 66;
+  unsigned long bouncedat = millis();
+  digitalWrite(indshelfpin, HIGH);
+  while(1) {
+    prestate = digitalRead(indmotorpin);
+    if(prestate != lastdbstate) {
+      if(!debounceset) {
+        bouncedat = millis() + debouncedelay;
+        debounceset = true;
+      }
+      if(millis() > bouncedat) {
+        //still different
+        indstate = prestate;
+        lastdbstate = indstate;
+        debounceset = false;
+      }
+    } else {
+      debounceset = false;
+    }
+    if(indstate != laststate) {
+      Serial.print("State Changed: ");
+      Serial.println(indstate);
+      laststate = indstate;
+    }
+    delay(2);
+  }
+  pinslow();
+  Serial.println("Finished JustRead");
+}
 void stepsketch() {
   Serial.println("Step Mode...waiting a few seconds");
   delay(1000);
   Serial.println("Begin...");
-  for (int i = 0; i < 6; i++){
+  for (int i = 0; i < 1; i++){
     Serial.print("i: ");
     Serial.print(i);
     Serial.print(", pin_red[]: ");
@@ -200,12 +262,19 @@ void stepsketch() {
       Serial.print(j);
       Serial.print(", pin_black[]: ");
       Serial.println(pin_black[j]);
-      delay(1000);
+      delay(2222);
       pinslow();
     }
   }
 }
-
+void simpleread() {
+  digitalWrite(53, HIGH);
+  while(1) {
+    simplereading = digitalRead(52);
+    Serial.println(simplereading);
+    delay(345);
+  }
+}
 void postest() {
   //like stepsketch, except only manipulates positive pins
   Serial.println("Positive Gate Test Mode...waiting");
@@ -227,19 +296,38 @@ void postest() {
 
 void specificpin() {
   pinslow();
-  for (int i = 0; i < 6; i++){
-    digitalWrite(pin_red[i], HIGH);
+  digitalWrite(indshelf[0], HIGH);
+  // for (int i = 0; i < 6; i++){
+  //   digitalWrite(pin_red[i], HIGH);
+  // }
+  for (int i = 0; i < 8; i++){
+    digitalWrite(pin_black[i], HIGH);
   }
-  digitalWrite(pin_black[0], HIGH);
+}
+
+void center() {
+  boolean centerresult = false;
+  for(int z = 0; z<5; z++) {
+    if(z==specialshelf) {
+      motorextent = 8;
+    } else {
+      motorextent = motorextentdefault;
+    }
+    for(int h = 0; h<motorextent; h++) {
+      centerresult = docenter(z, h);
+      Serial.print("Center Result: ");
+      Serial.println(centerresult);
+      delay(111);
+    }
+  }
+  Serial.println("Finished Center Routine");
 }
 
 void loop() {
   if(go) {
-    if(themode == "c") {
-      boolean centerresult = docenter(centeronshelf, centermotor);
-      Serial.print("Center Result: ");
-      Serial.println(centerresult);
-    } else if (themode == "r") {
+    if(themode == "center") {
+      center();
+    } else if (themode == "rotateandread") {
       rotateandread(centeronshelf, centermotor, rrshelf, rrmotor);
     } else if (themode == "s") {
       stepsketch();
@@ -250,6 +338,10 @@ void loop() {
       specificpin();
     } else if (themode == "postest") {
       postest();
+    } else if (themode == "justread") {
+      justread(rrshelf, rrmotor);
+    } else if (themode == "simpleread") {
+      simpleread();
     }
     go = false;
   }
